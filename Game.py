@@ -191,7 +191,7 @@ class Player:
             self.y = 0
         self.dx = int(self.dx * 0.8)
         self.is_falling = self.y > last_y
-        if (pyxel.btnr(pyxel.KEY_SPACE) or pyxel.btnr(pyxel.GAMEPAD1_BUTTON_A)) and self.last_shot+SHOT_FRAME_INTERVAL<pyxel.frame_count:
+        if (pyxel.btnr(pyxel.KEY_SPACE) or pyxel.btnr(pyxel.GAMEPAD1_BUTTON_A)) and self.last_shot+SHOT_FRAME_INTERVAL<pyxel.frame_count and mode==1:
             if self.direction==1:
                 bullets.append(PlayerBullet(self.x+TILE_SIZE//2,self.y,1,0))
             else:
@@ -367,7 +367,8 @@ class App:
         else:
             scroll=pyxel.width//2
         pyxel.camera()
-        pyxel.bltm(0,0,2,0,0,pyxel.width,pyxel.height)
+        if mode==1:
+            pyxel.bltm(0,0,2,0,0,pyxel.width,pyxel.height)
         pyxel.bltm(0, 0,image_src, scroll, 0, pyxel.width, pyxel.height, transparent_color)
         if DEBUG:
             for i in range(0,32):
@@ -386,7 +387,7 @@ class App:
         if pyxel.btn(pyxel.KEY_L) and not in_hell:
             go_to_hell()
 def game_over():
-    global scroll, enemies, in_hell, image_src 
+    global scroll, enemies, in_hell, image_src ,mode
     scroll = pyxel.width//2
     player.x = 0
     player.y = 0
@@ -395,6 +396,7 @@ def game_over():
     enemies = []
     in_hell = False
     image_src = 0 
+    mode=1
     spawn_enemies()
     # pyxel.play(3, 9)
 
