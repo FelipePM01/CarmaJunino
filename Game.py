@@ -1,8 +1,8 @@
 import pyxel
 
+TILE_SIZE=8
 TRANSPARENT_COLOR = 2
-SCROLL_BORDER_X = 80
-COLLIDING_TILE_X=8
+COLLIDING_TILE_X=TILE_SIZE
 TILE_SPAWN1 = (1,0)
 TILE_SPAWN2 = (2,0)
 TILE_SPAWN3 = (3,0)
@@ -11,75 +11,67 @@ PLAYER_JUMP_SPEED=6
 TILEMAP_WIDTH=55
 TILEMAP_HEIGHT=15
 FPS=25
+DEBUG  = True
 
 scroll=None
-mode=-1
+mode=1
 player = None
 enemies = []
 
-
+class rect:
+    x: int
+    y: int 
+    w: int 
+    h: int 
+    def __init__(self, x: int, y: int, w: int, h: int):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
 def get_tile(tile_x, tile_y):
     tilemap=pyxel.tilemap
     return pyxel.tilemaps[0].pget(tile_x, tile_y)
 
+def is_colliding(x,y,k, w=8,h=8):
 
-def is_colliding(x, y, is_falling):
-    x1 = int(x // 8)
-    y1 = int(y // 8)
-    x2 = int((x + 7) // 8)
-    y2 = int((y + 7) // 8)
-    for yi in range(y1, y2 + 1):
-        for xi in range(x1, x2 + 1):
-            if get_tile(xi, yi)[0] >= COLLIDING_TILE_X:
-                return True
-    if is_falling and y % 8 == 1:
-        for xi in range(x1, x2 + 1):
-            if get_tile(xi, y1 + 1)[0] == COLLIDING_TILE_X:
+    xmin = x // TILE_SIZE
+    ymin = y // TILE_SIZE
+    xmax = pyxel.ceil((x+w)/TILE_SIZE)
+    ymax = pyxel.ceil((y+h)/TILE_SIZE)
+    for i in range(xmin, xmax):
+        for j in range(ymin, ymax):
+            if get_tile(i, j)[0] >= COLLIDING_TILE_X:
                 return True
     return False
-
 
 def push_back(x, y, dx, dy):
     abs_dx = abs(dx)
     abs_dy = abs(dy)
-    if abs_dx > abs_dy:
-        for _ in range(pyxel.ceil(abs_dx)):
-            step = max(-1, min(1, dx))
-            if is_colliding(x + step, y, dy > 0):
-                break
-            x += step
-            dx -= step
-        for _ in range(pyxel.ceil(abs_dy)):
-            step = max(-1, min(1, dy))
-            if is_colliding(x, y + step, dy > 0):
-                break
-            y += step
-            dy -= step
-    else:
-        for _ in range(pyxel.ceil(abs_dy)):
-            step = max(-1, min(1, dy))
-            if is_colliding(x, y + step, dy > 0):
-                break
-            y += step
-            dy -= step
-        for _ in range(pyxel.ceil(abs_dx)):
-            step = max(-1, min(1, dx))
-            if is_colliding(x + step, y, dy > 0):
-                break
-            x += step
-            dx -= step
+    for _ in range(pyxel.ceil(abs_dy)):
+        step = max(-1, min(1, dy))
+        if is_colliding(x, y + step, dy > 0):
+            break
+        y += step
+        dy -= step
+    for _ in range(pyxel.ceil(abs_dx)):
+        step = max(-1, min(1, dx))
+        if is_colliding(x + step, y, dy > 0):
+            break
+        x += step
+        dx -= step
+
     return x, y
 
 
 def is_wall(x, y):
-    tile = get_tile(x // 8, y // 8)
+    tile = get_tile(x // TILE_SIZE, y // TILE_SIZE)
     return tile[0] >= COLLIDING_TILE_X
 
 def is_on_floor(x,y):
-    x1 = int(x // 8)
-    y1 = int((y+8) // 8)
-    x2 = int((x + 7) // 8)
-    y2 = int((y + 15) // 8)
+    x1 = int(x // TILE_SIZE)
+    y1 = int((y+TILE_SIZE) // TILE_SIZE)
+    x2 = int((x + 7) // TILE_SIZE)
+    y2 = int((y + 15) // TILE_SIZE)
     for yi in range(y1,y2+1):
         for xi in range(x1, x2 + 1):
                 if get_tile(xi, yi)[0]>=COLLIDING_TILE_X:
@@ -87,7 +79,7 @@ def is_on_floor(x,y):
 
 def is_on_display(x):
     global scroll
-    if x<=scroll+pyxel.width//2 and x>=scroll-pyxel.width//2:
+    if  -TILE_SIZE <= x -scroll <= pyxel.width:
         return True
     else:
         return False
@@ -98,11 +90,11 @@ def spawn_enemies():
         for y in range(TILEMAP_HEIGHT+1):
             tile = get_tile(x, y)
             if tile == TILE_SPAWN1:
-                enemies.append(Enemy1(x * 8, y * 8))
+                enemies.append(Enemy1(x * TILE_SIZE, y * TILE_SIZE))
             # elif tile == TILE_SPAWN2:
-            #     enemies.append(Enemy2(x * 8, y * 8))
+            #     enemies.append(Enemy2(x * TILE_SIZE, y * TILE_SIZE))
             # elif tile == TILE_SPAWN3:
-            #     enemies.append(Enemy3(x * 8, y * 8))
+            #     enemies.append(Enemy3(x * TILE_SIZE, y * TILE_SIZE))
 
 
 def cleanup_entities(entities):
@@ -124,7 +116,17 @@ def btn_right():
         return pyxel.btn(pyxel.KEY_RIGHT)
     else:
         return pyxel.btn(pyxel.KEY_LEFT)
-
+def colision_area_tiles(r):
+    
+    xmin = r.x // TILE_SIZE
+    ymin = r.y // TILE_SIZE
+    xmax = pyxel.ceil((r.x+r.w)/TILE_SIZE)
+    ymax = pyxel.ceil((r.y+r.h)/TILE_SIZE)
+    arr = []
+    for i in range(xmin, xmax):
+        for j in range(ymin, ymax): 
+            arr.append([i,j])
+    return arr
 
 class Player:
     def __init__(self, x, y):
@@ -134,9 +136,13 @@ class Player:
         self.dy = 0
         self.direction = 1
         self.is_falling = False
-
+    def get_colision_area(self):
+        return rect(self.x+2, self.y+1, 4, 7)
+        
     def update(self):
         global mode # 1 for default mode / -1 for reversed mode
+  
+
         last_y = self.y
         if btn_right():
             self.dx = PLAYER_SPEED
@@ -159,11 +165,18 @@ class Player:
 
     def draw(self):
         if btn_left() ^ btn_right() and not self.is_falling:
-            u =  (pyxel.frame_count // 6 % 2) * 8
+            u =  (pyxel.frame_count // 6 % 2) * TILE_SIZE
         else:
             u = 0
-        w = 8 if self.direction > 0 else -8
-        pyxel.blt(self.x, self.y, 0, u, 48, w, 8, TRANSPARENT_COLOR)
+        w = TILE_SIZE if self.direction > 0 else -TILE_SIZE 
+
+        pyxel.blt(self.x, self.y, 0, u, 48, w, TILE_SIZE, TRANSPARENT_COLOR)
+        if DEBUG:
+            r =  player.get_colision_area()
+ 
+
+            pyxel.rect(r.x, r.y, r.w, r.h, 3)
+            pyxel.line(r.x, r.y, r.x+self.dx, r.y+self.dy, 8)
 
 
 class Enemy1:
@@ -187,11 +200,11 @@ class Enemy1:
         self.x, self.y = push_back(self.x, self.y, self.dx, self.dy)
 
     def draw(self):
-        u = pyxel.frame_count // 4 % 2 * 8
-        w = 8 if self.direction > 0 else -8
+        u = pyxel.frame_count // 4 % 2 * TILE_SIZE
+        w = TILE_SIZE if self.direction > 0 else -TILE_SIZE
         
         if is_on_display(self.x):
-            pyxel.blt(self.x, self.y, 0, u, 40, w, 8)
+            pyxel.blt(self.x, self.y, 0, u, 40, w, TILE_SIZE, TRANSPARENT_COLOR)
 
 
 class Enemy2:
@@ -206,21 +219,21 @@ class Enemy2:
     def update(self):
         self.dx = self.direction
         self.dy = min(self.dy + 1, 3)
-        if is_wall(self.x, self.y + 8) or is_wall(self.x + 7, self.y + 8):
+        if is_wall(self.x, self.y + TILE_SIZE) or is_wall(self.x + 7, self.y + TILE_SIZE):
             if self.direction < 0 and (
-                is_wall(self.x - 1, self.y + 4) or not is_wall(self.x - 1, self.y + 8)
+                is_wall(self.x - 1, self.y + 4) or not is_wall(self.x - 1, self.y + TILE_SIZE)
             ):
                 self.direction = 1
             elif self.direction > 0 and (
-                is_wall(self.x + 8, self.y + 4) or not is_wall(self.x + 7, self.y + 8)
+                is_wall(self.x + TILE_SIZE, self.y + 4) or not is_wall(self.x + 7, self.y + TILE_SIZE)
             ):
                 self.direction = -1
         self.x, self.y = push_back(self.x, self.y, self.dx, self.dy)
 
     def draw(self):
-        u = pyxel.frame_count // 4 % 2 * 8 + 16
-        w = 8 if self.direction > 0 else -8
-        pyxel.blt(self.x, self.y, 0, u, 24, w, 8, TRANSPARENT_COLOR)
+        u = pyxel.frame_count // 4 % 2 * TILE_SIZE + 16
+        w = TILE_SIZE if self.direction > 0 else -TILE_SIZE
+        pyxel.blt(self.x, self.y, 0, u, 24, w, TILE_SIZE, TRANSPARENT_COLOR)
 
 
 class Enemy3:
@@ -242,8 +255,8 @@ class Enemy3:
                 self.time_to_fire = 60
 
     def draw(self):
-        u = pyxel.frame_count // 8 % 2 * 8
-        pyxel.blt(self.x, self.y, 0, u, 32, 8, 8, TRANSPARENT_COLOR)
+        u = pyxel.frame_count // TILE_SIZE % 2 * TILE_SIZE
+        pyxel.blt(self.x, self.y, 0, u, 32, TILE_SIZE, TILE_SIZE, TRANSPARENT_COLOR)
 
 
 class Enemy3Bullet:
@@ -259,8 +272,8 @@ class Enemy3Bullet:
         self.y += self.dy
 
     def draw(self):
-        u = pyxel.frame_count // 2 % 2 * 8 + 16
-        pyxel.blt(self.x, self.y, 0, u, 32, 8, 8, TRANSPARENT_COLOR)
+        u = pyxel.frame_count // 2 % 2 * TILE_SIZE + 16
+        pyxel.blt(self.x, self.y, 0, u, 32, TILE_SIZE, TILE_SIZE, TRANSPARENT_COLOR)
 
 
 class App:
@@ -270,11 +283,11 @@ class App:
         global scroll
         scroll=pyxel.width//2
 
-        # Change enemy spawn tiles invisible
-        # pyxel.images[0].rect(1, 0, 24, 8, TRANSPARENT_COLOR)
+        #Change enemy spawn tiles invisible
+        pyxel.images[0].rect(TILE_SIZE, 0, 24, TILE_SIZE, TRANSPARENT_COLOR)
 
         global player
-        player = Player(0, 0)
+        player = Player(0, 60)
         spawn_enemies()
         # pyxel.playm(0, loop=True)
         pyxel.run(self.update, self.draw)
@@ -289,24 +302,33 @@ class App:
                 game_over()
                 return
             enemy.update()
-            # if enemy.x < scroll_x - 8 or enemy.x > scroll_x + 160 or enemy.y > 160:
+            # if enemy.x < scroll_x - TILE_SIZE or enemy.x > scroll_x + 160 or enemy.y > 160:
             #     enemy.is_alive = False
         cleanup_entities(enemies)
 
     def draw(self):
+        global scroll
         pyxel.cls(0)
 
+        pyxel.blt(scroll, 64, 0, 0, TILE_SIZE, TILE_SIZE, TILE_SIZE, TRANSPARENT_COLOR)
         # Draw level
         if player!=None:
-            scroll=max(min(TILEMAP_WIDTH*8-pyxel.width,player.x-pyxel.width//2),0)
+            scroll=max(min(player.x-pyxel.width//2, TILEMAP_WIDTH*TILE_SIZE-pyxel.width),0)
         else:
             scroll=pyxel.width//2
         pyxel.camera()
         pyxel.bltm(0, 0, 0, scroll, 0, pyxel.width, pyxel.height, TRANSPARENT_COLOR)
         # pyxel.bltm(0, 0, 0, scroll, 0, 128, 128, TRANSPARENT_COLOR)
+        if DEBUG:
+            for i in range(0,32):
+                for j in range(0,32):
+                    if get_tile(scroll//8+i, j)[0]>=COLLIDING_TILE_X:
+                        pyxel.rect(i*TILE_SIZE-scroll%8, j*TILE_SIZE, TILE_SIZE, TILE_SIZE, 1)
+                        pyxel.rect(i*TILE_SIZE-scroll%8+1, j*TILE_SIZE+1, TILE_SIZE-2, TILE_SIZE-2, 2)
 
         # Draw characters
         pyxel.camera(scroll, 0)
+        print(player.x, player.y)
         player.draw()
         for enemy in enemies:
             enemy.draw()
