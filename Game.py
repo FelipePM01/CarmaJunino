@@ -55,6 +55,8 @@ def go_to_hell():
     global enemies
     global mode
     global killed_enemies
+    pyxel.stop()
+    pyxel.playm(1,loop=True)
     image_src = 1
     in_hell = True
     enemies =  []
@@ -318,9 +320,10 @@ class App:
         pyxel.load("carmaJunino.pyxres")
         global scroll
         scroll=pyxel.width//2
-
+        pyxel.playm(0,loop=True)
         #Change enemy spawn tiles invisible
         pyxel.images[0].rect(TILE_SIZE, 0, 24, TILE_SIZE, transparent_color)
+        pyxel.images[1].rect(TILE_SIZE, 0, 24, TILE_SIZE, transparent_color)
 
         spawn_enemies()
         # pyxel.playm(0, loop=True)
@@ -398,7 +401,9 @@ def game_over():
     image_src = 0 
     mode=1
     spawn_enemies()
-    # pyxel.play(3, 9)
+    pyxel.stop()
+    pyxel.playm(0,loop=True)
+
 
 
 App()
