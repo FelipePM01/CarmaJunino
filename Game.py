@@ -3,20 +3,23 @@ import pyxel
 TRANSPARENT_COLOR = 2
 SCROLL_BORDER_X = 80
 COLLIDING_TILE_X=8
-TILE_SPAWN1 = (0, 1)
-TILE_SPAWN2 = (1, 1)
-TILE_SPAWN3 = (2, 1)
+TILE_SPAWN1 = (1,0)
+TILE_SPAWN2 = (2,0)
+TILE_SPAWN3 = (3,0)
 PLAYER_SPEED=2
 PLAYER_JUMP_SPEED=6
 TILEMAP_WIDTH=55
+TILEMAP_HEIGHT=15
+FPS=25
 
-scroll_x = 0
-mode=1
+scroll=None
+mode=-1
 player = None
 enemies = []
 
 
 def get_tile(tile_x, tile_y):
+    tilemap=pyxel.tilemap
     return pyxel.tilemaps[0].pget(tile_x, tile_y)
 
 
@@ -82,19 +85,24 @@ def is_on_floor(x,y):
                 if get_tile(xi, yi)[0]>=COLLIDING_TILE_X:
                     return True
 
+def is_on_display(x):
+    global scroll
+    if x<=scroll+pyxel.width//2 and x>=scroll-pyxel.width//2:
+        return True
+    else:
+        return False
 
-def spawn_enemy(left_x, right_x):
-    left_x = pyxel.ceil(left_x / 8)
-    right_x = pyxel.floor(right_x / 8)
-    for x in range(left_x, right_x + 1):
-        for y in range(16):
+
+def spawn_enemies():
+    for x in range(TILEMAP_WIDTH + 1):
+        for y in range(TILEMAP_HEIGHT+1):
             tile = get_tile(x, y)
             if tile == TILE_SPAWN1:
                 enemies.append(Enemy1(x * 8, y * 8))
-            elif tile == TILE_SPAWN2:
-                enemies.append(Enemy2(x * 8, y * 8))
-            elif tile == TILE_SPAWN3:
-                enemies.append(Enemy3(x * 8, y * 8))
+            # elif tile == TILE_SPAWN2:
+            #     enemies.append(Enemy2(x * 8, y * 8))
+            # elif tile == TILE_SPAWN3:
+            #     enemies.append(Enemy3(x * 8, y * 8))
 
 
 def cleanup_entities(entities):
@@ -148,20 +156,24 @@ class Enemy1:
         self.dy = 0
         self.direction = -1
         self.is_alive = True
+        
 
     def update(self):
         self.dx = self.direction
         self.dy = min(self.dy + 1, 3)
-        if self.direction < 0 and is_wall(self.x - 1, self.y + 4):
-            self.direction = 1
-        elif self.direction > 0 and is_wall(self.x + 8, self.y + 4):
-            self.direction = -1
+        move_turn=(pyxel.frame_count//FPS)%4
+        if move_turn==0 or move_turn==3:
+            self.direction=-1
+        else:
+            self.direction=1
         self.x, self.y = push_back(self.x, self.y, self.dx, self.dy)
 
     def draw(self):
         u = pyxel.frame_count // 4 % 2 * 8
         w = 8 if self.direction > 0 else -8
-        pyxel.blt(self.x, self.y, 0, u, 24, w, 8, TRANSPARENT_COLOR)
+        
+        if is_on_display(self.x):
+            pyxel.blt(self.x, self.y, 0, u, 40, w, 8)
 
 
 class Enemy2:
@@ -235,15 +247,17 @@ class Enemy3Bullet:
 
 class App:
     def __init__(self):
-        pyxel.init(128, 128, title="Carma Junino")
+        pyxel.init(128, 128, title="Carma Junino" , fps=FPS)
         pyxel.load("carmaJunino.pyxres")
+        global scroll
+        scroll=pyxel.width//2
 
         # Change enemy spawn tiles invisible
-        pyxel.images[0].rect(0, 8, 24, 8, TRANSPARENT_COLOR)
+        # pyxel.images[0].rect(1, 0, 24, 8, TRANSPARENT_COLOR)
 
         global player
         player = Player(0, 0)
-        # spawn_enemy(0, 127)
+        spawn_enemies()
         # pyxel.playm(0, loop=True)
         pyxel.run(self.update, self.draw)
 
@@ -257,8 +271,8 @@ class App:
                 game_over()
                 return
             enemy.update()
-            if enemy.x < scroll_x - 8 or enemy.x > scroll_x + 160 or enemy.y > 160:
-                enemy.is_alive = False
+            # if enemy.x < scroll_x - 8 or enemy.x > scroll_x + 160 or enemy.y > 160:
+            #     enemy.is_alive = False
         cleanup_entities(enemies)
 
     def draw(self):
@@ -281,14 +295,14 @@ class App:
 
 
 def game_over():
-    global scroll_x, enemies
-    scroll_x = 0
+    global scroll, enemies
+    scroll = pyxel.width//2
     player.x = 0
     player.y = 0
     player.dx = 0
     player.dy = 0
     enemies = []
-    # spawn_enemy(0, 127)
+    spawn_enemies()
     # pyxel.play(3, 9)
 
 
