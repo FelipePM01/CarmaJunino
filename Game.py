@@ -36,7 +36,7 @@ class rect:
         self.h = h
 def get_tile(tile_x, tile_y):
     tilemap=pyxel.tilemap
-    return pyxel.tilemaps[0].pget(tile_x, tile_y)
+    return pyxel.tilemaps[1].pget(tile_x, tile_y)
 
 def is_colliding(x,y,k=0, w=8,h=8):
 
@@ -363,7 +363,6 @@ class App:
         global transparent_color
         pyxel.cls(0)
         
-        pyxel.blt(scroll, 64, 0, image_src, TILE_SIZE, TILE_SIZE, TILE_SIZE, transparent_color)
         # Draw level
         if player!=None:
             scroll=max(min(player.x-pyxel.width//2, TILEMAP_WIDTH*TILE_SIZE-pyxel.width),0)
@@ -372,7 +371,8 @@ class App:
         pyxel.camera()
         if mode==1:
             pyxel.bltm(0,0,2,0,0,pyxel.width,pyxel.height)
-        pyxel.bltm(0, 0,image_src, scroll, 0, pyxel.width, pyxel.height, transparent_color)
+        pyxel.tilemaps[1].imgsrc = image_src 
+        pyxel.bltm(0, 0,1, scroll, 0, pyxel.width, pyxel.height, transparent_color)
         for i in range(0,32):
             for j in range(0,32):
                 tile = get_tile(scroll//8+i, j)
