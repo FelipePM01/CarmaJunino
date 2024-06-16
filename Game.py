@@ -8,8 +8,9 @@ TILE_SPAWN2 = (1, 1)
 TILE_SPAWN3 = (2, 1)
 PLAYER_SPEED=2
 PLAYER_JUMP_SPEED=6
+TILEMAP_WIDTH=55
 
-scroll_x_min = 0
+scroll_x = 0
 mode=1
 player = None
 enemies = []
@@ -112,7 +113,6 @@ class Player:
         self.is_falling = False
 
     def update(self):
-        global scroll_x_min
         global mode # 1 for default mode / -1 for reversed mode
         last_y = self.y
         if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btnv(pyxel.GAMEPAD1_AXIS_LEFTX)*mode>=20000:
@@ -125,17 +125,12 @@ class Player:
         if (pyxel.btnp(pyxel.KEY_SPACE) or pyxel.btnv(pyxel.GAMEPAD1_AXIS_LEFTY)*mode<=-20000) and is_on_floor(self.x,self.y) :
             self.dy = -PLAYER_JUMP_SPEED
         self.x, self.y = push_back(self.x, self.y, self.dx, self.dy)
-        if self.x < scroll_x_min:
-            self.x = scroll_x_min
         if self.y < 0:
             self.y = 0
         self.dx = int(self.dx * 0.8)
         self.is_falling = self.y > last_y
 
-        if self.x > scroll_x_min + SCROLL_BORDER_X:
-            last_scroll_x_min = scroll_x_min
-            scroll_x_min = min(self.x - SCROLL_BORDER_X, 240 * 8)
-            # spawn_enemy(last_scroll_x_min + 128, scroll_x_min + 127)
+        
         if self.y >= pyxel.height:
             game_over()
 
@@ -262,7 +257,7 @@ class App:
                 game_over()
                 return
             enemy.update()
-            if enemy.x < scroll_x_min - 8 or enemy.x > scroll_x_min + 160 or enemy.y > 160:
+            if enemy.x < scroll_x - 8 or enemy.x > scroll_x + 160 or enemy.y > 160:
                 enemy.is_alive = False
         cleanup_entities(enemies)
 
@@ -270,20 +265,24 @@ class App:
         pyxel.cls(0)
 
         # Draw level
+        if player!=None:
+            scroll=max(min(TILEMAP_WIDTH*8-pyxel.width,player.x-pyxel.width//2),0)
+        else:
+            scroll=pyxel.width//2
         pyxel.camera()
-        pyxel.bltm(0, 0, 0, (scroll_x_min // 4) % 128, 128, 128, 128)
-        pyxel.bltm(0, 0, 0, scroll_x_min, 0, 128, 128, TRANSPARENT_COLOR)
+        pyxel.bltm(0, 0, 0, scroll, 0, pyxel.width, pyxel.height)
+        # pyxel.bltm(0, 0, 0, scroll, 0, 128, 128, TRANSPARENT_COLOR)
 
         # Draw characters
-        pyxel.camera(scroll_x_min, 0)
+        pyxel.camera(scroll, 0)
         player.draw()
         for enemy in enemies:
             enemy.draw()
 
 
 def game_over():
-    global scroll_x_min, enemies
-    scroll_x_min = 0
+    global scroll_x, enemies
+    scroll_x = 0
     player.x = 0
     player.y = 0
     player.dx = 0
