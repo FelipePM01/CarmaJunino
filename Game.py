@@ -109,6 +109,21 @@ def cleanup_entities(entities):
     for i in range(len(entities) - 1, -1, -1):
         if not entities[i].is_alive:
             del entities[i]
+def btn_left():
+    if pyxel.btnv(pyxel.GAMEPAD1_AXIS_LEFTX)*mode>=20000:
+        return True;
+    if mode == 1:
+        return pyxel.btn(pyxel.KEY_LEFT)
+    else: 
+        return pyxel.btn(pyxel.KEY_RIGHT)
+
+def btn_right():
+    if pyxel.btnv(pyxel.GAMEPAD1_AXIS_LEFTX)*mode<=-20000:
+        return True;
+    if mode == 1:
+        return pyxel.btn(pyxel.KEY_RIGHT)
+    else:
+        return pyxel.btn(pyxel.KEY_LEFT)
 
 
 class Player:
@@ -123,10 +138,10 @@ class Player:
     def update(self):
         global mode # 1 for default mode / -1 for reversed mode
         last_y = self.y
-        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btnv(pyxel.GAMEPAD1_AXIS_LEFTX)*mode>=20000:
+        if btn_right():
             self.dx = PLAYER_SPEED
             self.direction = 1
-        if pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btnv(pyxel.GAMEPAD1_AXIS_LEFTX)*mode<=-20000:
+        if btn_left():
             self.dx = -PLAYER_SPEED
             self.direction = -1
         self.dy = min(self.dy + 1, 3)
@@ -143,7 +158,10 @@ class Player:
             game_over()
 
     def draw(self):
-        u = (0 if self.is_falling else pyxel.frame_count // 3 % 2) * 8
+        if btn_left() ^ btn_right() and not self.is_falling:
+            u =  (pyxel.frame_count // 6 % 2) * 8
+        else:
+            u = 0
         w = 8 if self.direction > 0 else -8
         pyxel.blt(self.x, self.y, 0, u, 48, w, 8, TRANSPARENT_COLOR)
 
@@ -284,7 +302,7 @@ class App:
         else:
             scroll=pyxel.width//2
         pyxel.camera()
-        pyxel.bltm(0, 0, 0, scroll, 0, pyxel.width, pyxel.height)
+        pyxel.bltm(0, 0, 0, scroll, 0, pyxel.width, pyxel.height, TRANSPARENT_COLOR)
         # pyxel.bltm(0, 0, 0, scroll, 0, 128, 128, TRANSPARENT_COLOR)
 
         # Draw characters
