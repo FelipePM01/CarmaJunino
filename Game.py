@@ -36,7 +36,7 @@ def get_tile(tile_x, tile_y):
     tilemap=pyxel.tilemap
     return pyxel.tilemaps[0].pget(tile_x, tile_y)
 
-def is_colliding(x,y,k, w=8,h=8):
+def is_colliding(x,y,k=0, w=8,h=8):
 
     xmin = x // TILE_SIZE
     ymin = y // TILE_SIZE
@@ -90,15 +90,17 @@ def is_on_display(x):
 
 
 def spawn_enemies():
+    global player
+    global enemies
     for x in range(TILEMAP_WIDTH + 1):
         for y in range(TILEMAP_HEIGHT+1):
             tile = get_tile(x, y)
             if tile == TILE_SPAWN1:
                 enemies.append(Enemy1(x * TILE_SIZE, y * TILE_SIZE))
-            # elif tile == TILE_SPAWN2:
-            #     enemies.append(Enemy2(x * TILE_SIZE, y * TILE_SIZE))
-            # elif tile == TILE_SPAWN3:
-            #     enemies.append(Enemy3(x * TILE_SIZE, y * TILE_SIZE))
+            elif tile == TILE_SPAWN2:
+                enemies.append(Enemy2(x * TILE_SIZE, y * TILE_SIZE))
+            elif tile == TILE_SPAWN3:
+               player=Player(x * TILE_SIZE, y * TILE_SIZE)
 
 
 def cleanup_entities(entities):
@@ -217,74 +219,35 @@ class Enemy1:
         if is_on_display(self.x):
             pyxel.blt(self.x, self.y, image_id, u, 40, w, TILE_SIZE, transparent_color)
 
-
 class Enemy2:
     def __init__(self, x, y):
         self.x = x
         self.y = y
         self.dx = 0
         self.dy = 0
-        self.direction = 1
+        self.direction = -1
         self.is_alive = True
+        
 
     def update(self):
-        self.dx = self.direction
+        self.dx = self.direction*2
         self.dy = min(self.dy + 1, 3)
-        if is_wall(self.x, self.y + TILE_SIZE) or is_wall(self.x + 7, self.y + TILE_SIZE):
-            if self.direction < 0 and (
-                is_wall(self.x - 1, self.y + 4) or not is_wall(self.x - 1, self.y + TILE_SIZE)
-            ):
-                self.direction = 1
-            elif self.direction > 0 and (
-                is_wall(self.x + TILE_SIZE, self.y + 4) or not is_wall(self.x + 7, self.y + TILE_SIZE)
-            ):
-                self.direction = -1
+        move_turn=(pyxel.frame_count//FPS)%4
+        if move_turn==0 or move_turn==3:
+            self.direction=-1
+        else:
+            self.direction=1
         self.x, self.y = push_back(self.x, self.y, self.dx, self.dy)
 
     def draw(self):
-        u = pyxel.frame_count // 4 % 2 * TILE_SIZE + 16
+        u = pyxel.frame_count // 4 % 2 * TILE_SIZE
         w = TILE_SIZE if self.direction > 0 else -TILE_SIZE
-        pyxel.blt(self.x, self.y, 0, u, 24, w, TILE_SIZE, transparent_color)
+        
+        if is_on_display(self.x):
+            pyxel.blt(self.x, self.y, image_id, u, 40, w, TILE_SIZE, transparent_color)
 
 
-class Enemy3:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.time_to_fire = 0
-        self.is_alive = True
 
-    def update(self):
-        self.time_to_fire -= 1
-        if self.time_to_fire <= 0:
-            dx = player.x - self.x
-            dy = player.y - self.y
-            sq_dist = dx * dx + dy * dy
-            if sq_dist < 60**2:
-                dist = pyxel.sqrt(sq_dist)
-                enemies.append(Enemy3Bullet(self.x, self.y, dx / dist, dy / dist))
-                self.time_to_fire = 60
-
-    def draw(self):
-        u = pyxel.frame_count // TILE_SIZE % 2 * TILE_SIZE
-        pyxel.blt(self.x, self.y, image_id, u, 32, TILE_SIZE, TILE_SIZE, transparent_color)
-
-
-class Enemy3Bullet:
-    def __init__(self, x, y, dx, dy):
-        self.x = x
-        self.y = y
-        self.dx = dx
-        self.dy = dy
-        self.is_alive = True
-
-    def update(self):
-        self.x += self.dx
-        self.y += self.dy
-
-    def draw(self):
-        u = pyxel.frame_count // 2 % 2 * TILE_SIZE + 16
-        pyxel.blt(self.x, self.y, image_id, u, 32, TILE_SIZE, TILE_SIZE, transparent_color)
 
 class PlayerBullet:
     def __init__(self, x, y, dx, dy):
@@ -296,9 +259,13 @@ class PlayerBullet:
         self.start_boom=0
 
     def update(self):
-        if self.is_alive:
+        if self.is_alive and not is_colliding(self.x,self.y):
             self.x += self.dx*BULLET_SPEED
             self.y += self.dy*BULLET_SPEED
+        elif is_colliding(self.x,self.y) and self.is_alive:
+            self.destroy()
+
+        
 
     def draw(self):
         global transparent_color
@@ -306,7 +273,7 @@ class PlayerBullet:
         if self.is_alive:
             u=0
         else:
-            frame=pyxel.frame_count // 2 % 4
+            frame=(pyxel.frame_count-self.start_boom) // 2 % 4
             if frame!=3:
                 u = frame * TILE_SIZE + 8 
             else:
@@ -316,6 +283,7 @@ class PlayerBullet:
         pyxel.blt(self.x, self.y, 0, u, 64, TILE_SIZE, TILE_SIZE, transparent_color)
     def destroy(self):
         self.is_alive=False
+        self.start_boom=pyxel.frame_count
         
 
 
@@ -329,8 +297,6 @@ class App:
         #Change enemy spawn tiles invisible
         pyxel.images[0].rect(TILE_SIZE, 0, 24, TILE_SIZE, transparent_color)
 
-        global player
-        player = Player(0, 60)
         spawn_enemies()
         # pyxel.playm(0, loop=True)
         pyxel.run(self.update, self.draw)
