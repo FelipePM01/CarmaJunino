@@ -54,6 +54,7 @@ def go_to_hell():
     global in_hell
     global enemies
     global mode
+    global killed_enemies
     image_src = 1
     in_hell = True
     enemies =  []
@@ -61,6 +62,7 @@ def go_to_hell():
     for ke in killed_enemies:
           enemies.append(ke)
           ke.is_alive = True
+    killed_enemies = []
 def push_back(x, y, dx, dy):
     abs_dx = abs(dx)
     abs_dy = abs(dy)
