@@ -339,7 +339,7 @@ class App:
             
             for bullet in bullets:
                 if abs(bullet.x - enemies[enemy].x) < 6 and abs(bullet.y - enemies[enemy].y) < 6:
-                    bullets.remove(bullet)
+                    bullet.destroy()
                     del_list.append(enemies[enemy])
         
         for e in del_list:
