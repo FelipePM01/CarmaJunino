@@ -60,7 +60,9 @@ def go_to_hell():
     enemies =  []
     mode = -1
     for ke in killed_enemies:
-          enemies.append(ke)
+          e2 = Enemy2(ke.x, ke.y)
+          
+          enemies.append(e2)
           ke.is_alive = True
     killed_enemies = []
 def push_back(x, y, dx, dy):
@@ -240,7 +242,7 @@ class Enemy1:
         w = TILE_SIZE if self.direction > 0 else -TILE_SIZE
         
         if is_on_display(self.x):
-            pyxel.blt(self.x, self.y, image_id, u, 40, w, TILE_SIZE, transparent_color)
+            pyxel.blt(self.x, self.y, image_src, u, 40, w, TILE_SIZE, transparent_color)
 
 
 class Enemy2:
@@ -268,7 +270,7 @@ class Enemy2:
         w = TILE_SIZE if self.direction > 0 else -TILE_SIZE
         
         if is_on_display(self.x):
-            pyxel.blt(self.x, self.y, image_id, u, 40, w, TILE_SIZE, transparent_color)
+            pyxel.blt(self.x, self.y, image_src, u, 40, w, TILE_SIZE, transparent_color)
 
 
 
