@@ -234,7 +234,7 @@ class Enemy2:
             if self.direction < 0 and (
                 is_wall(self.x - 1, self.y + 4) or not is_wall(self.x - 1, self.y + TILE_SIZE)
             ):
-                self.direction = 1*BUL
+                self.direction = 1
             elif self.direction > 0 and (
                 is_wall(self.x + TILE_SIZE, self.y + 4) or not is_wall(self.x + 7, self.y + TILE_SIZE)
             ):
@@ -293,15 +293,30 @@ class PlayerBullet:
         self.dx = dx
         self.dy = dy
         self.is_alive = True
+        self.start_boom=0
 
     def update(self):
-        self.x += self.dx*BULLET_SPEED
-        self.y += self.dy*BULLET_SPEED
+        if self.is_alive:
+            self.x += self.dx*BULLET_SPEED
+            self.y += self.dy*BULLET_SPEED
 
     def draw(self):
         global transparent_color
-        # u = pyxel.frame_count // 2 % 2 * TILE_SIZE + 16
-        pyxel.blt(self.x, self.y, 0, 0, 64, TILE_SIZE, TILE_SIZE, transparent_color)
+        u=None
+        if self.is_alive:
+            u=0
+        else:
+            frame=pyxel.frame_count // 2 % 4
+            if frame!=3:
+                u = frame * TILE_SIZE + 8 
+            else:
+                bullets.remove(self)
+                return
+
+        pyxel.blt(self.x, self.y, 0, u, 64, TILE_SIZE, TILE_SIZE, transparent_color)
+    def destroy(self):
+        self.is_alive=False
+        
 
 
 class App:
@@ -333,7 +348,7 @@ class App:
             
             for bullet in bullets:
                 if abs(bullet.x - enemies[enemy].x) < 6 and abs(bullet.y - enemies[enemy].y) < 6:
-                    bullets.remove(bullet)
+                    bullet.destroy()
                     del_list.append(enemies[enemy])
         
         for i in del_list:
