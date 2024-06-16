@@ -1,7 +1,7 @@
 import pyxel
 
 TILE_SIZE=8
-TRANSPARENT_COLOR = 2
+trasnparent_color = 2
 COLLIDING_TILE_X=TILE_SIZE
 TILE_SPAWN1 = (1,0)
 TILE_SPAWN2 = (2,0)
@@ -11,7 +11,8 @@ PLAYER_JUMP_SPEED=6
 TILEMAP_WIDTH=55
 TILEMAP_HEIGHT=15
 FPS=25
-DEBUG  = True
+DEBUG  = False
+image_id = 0
 
 scroll=None
 mode=1
@@ -170,7 +171,7 @@ class Player:
             u = 0
         w = TILE_SIZE if self.direction > 0 else -TILE_SIZE 
 
-        pyxel.blt(self.x, self.y, 0, u, 48, w, TILE_SIZE, TRANSPARENT_COLOR)
+        pyxel.blt(self.x, self.y, image_id, u, 48, w, TILE_SIZE, trasnparent_color)
         if DEBUG:
             r =  player.get_colision_area()
  
@@ -204,7 +205,7 @@ class Enemy1:
         w = TILE_SIZE if self.direction > 0 else -TILE_SIZE
         
         if is_on_display(self.x):
-            pyxel.blt(self.x, self.y, 0, u, 40, w, TILE_SIZE, TRANSPARENT_COLOR)
+            pyxel.blt(self.x, self.y, image_id, u, 40, w, TILE_SIZE, trasnparent_color)
 
 
 class Enemy2:
@@ -233,7 +234,7 @@ class Enemy2:
     def draw(self):
         u = pyxel.frame_count // 4 % 2 * TILE_SIZE + 16
         w = TILE_SIZE if self.direction > 0 else -TILE_SIZE
-        pyxel.blt(self.x, self.y, 0, u, 24, w, TILE_SIZE, TRANSPARENT_COLOR)
+        pyxel.blt(self.x, self.y, 0, u, 24, w, TILE_SIZE, trasnparent_color)
 
 
 class Enemy3:
@@ -256,7 +257,7 @@ class Enemy3:
 
     def draw(self):
         u = pyxel.frame_count // TILE_SIZE % 2 * TILE_SIZE
-        pyxel.blt(self.x, self.y, 0, u, 32, TILE_SIZE, TILE_SIZE, TRANSPARENT_COLOR)
+        pyxel.blt(self.x, self.y, image_id, u, 32, TILE_SIZE, TILE_SIZE, trasnparent_color)
 
 
 class Enemy3Bullet:
@@ -273,7 +274,7 @@ class Enemy3Bullet:
 
     def draw(self):
         u = pyxel.frame_count // 2 % 2 * TILE_SIZE + 16
-        pyxel.blt(self.x, self.y, 0, u, 32, TILE_SIZE, TILE_SIZE, TRANSPARENT_COLOR)
+        pyxel.blt(self.x, self.y, image_id, u, 32, TILE_SIZE, TILE_SIZE, trasnparent_color)
 
 
 class App:
@@ -284,7 +285,7 @@ class App:
         scroll=pyxel.width//2
 
         #Change enemy spawn tiles invisible
-        pyxel.images[0].rect(TILE_SIZE, 0, 24, TILE_SIZE, TRANSPARENT_COLOR)
+        pyxel.images[0].rect(TILE_SIZE, 0, 24, TILE_SIZE, trasnparent_color)
 
         global player
         player = Player(0, 60)
@@ -310,15 +311,15 @@ class App:
         global scroll
         pyxel.cls(0)
 
-        pyxel.blt(scroll, 64, 0, 0, TILE_SIZE, TILE_SIZE, TILE_SIZE, TRANSPARENT_COLOR)
+        pyxel.blt(scroll, 64, 0, image_id, TILE_SIZE, TILE_SIZE, TILE_SIZE, trasnparent_color)
         # Draw level
         if player!=None:
             scroll=max(min(player.x-pyxel.width//2, TILEMAP_WIDTH*TILE_SIZE-pyxel.width),0)
         else:
             scroll=pyxel.width//2
         pyxel.camera()
-        pyxel.bltm(0, 0, 0, scroll, 0, pyxel.width, pyxel.height, TRANSPARENT_COLOR)
-        # pyxel.bltm(0, 0, 0, scroll, 0, 128, 128, TRANSPARENT_COLOR)
+        pyxel.bltm(0, 0, 0, scroll, image_id, pyxel.width, pyxel.height, trasnparent_color)
+        # pyxel.bltm(0, 0, 0, scroll, 0, 128, 128, trasnparent_color)
         if DEBUG:
             for i in range(0,32):
                 for j in range(0,32):
