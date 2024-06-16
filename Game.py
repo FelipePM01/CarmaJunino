@@ -377,9 +377,8 @@ class App:
             for j in range(0,32):
                 tile = get_tile(scroll//8+i, j)
                 if 0  == tile[0] and 2 == tile[1] or 0  == tile[0] and 9 == tile[1]:
-                    print(2*((pyxel.frame_count//8) %4))
-                    pyxel.rect(i*TILE_SIZE-scroll%8, j*TILE_SIZE, 2*TILE_SIZE, 2*TILE_SIZE, 1)
-                    pyxel.blt( i*TILE_SIZE-scroll%8, j*TILE_SIZE, image_src, (tile[0]+2*((pyxel.frame_count//8) %4))*TILE_SIZE, tile[1]*TILE_SIZE, 2* TILE_SIZE, 2*TILE_SIZE, transparent_color)
+                    # pyxel.rect(i*TILE_SIZE-scroll%8, j*TILE_SIZE, 2*TILE_SIZE, 2*TILE_SIZE, 1)
+                    # pyxel.blt( i*TILE_SIZE-scroll%8, j*TILE_SIZE, image_src, (tile[0]+2*((pyxel.frame_count//8) %4))*TILE_SIZE, tile[1]*TILE_SIZE, 2* TILE_SIZE, 2*TILE_SIZE, transparent_color)
                     pass
 
         if DEBUG:
@@ -401,6 +400,9 @@ class App:
         #print(tile1, tile2)
         if not in_hell and 0 <= tile1[0] < 2 and 9 <= tile1[1] < 11:
             go_to_hell()
+
+        if  in_hell and 0 <= tile1[0] < 2 and 11 <= tile1[1] < 13:
+            exit()
 def game_over():
     global scroll, enemies, in_hell, image_src ,mode
     scroll = pyxel.width//2
