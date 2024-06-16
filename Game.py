@@ -16,7 +16,7 @@ BULLET_SPEED=4
 DEBUG  = False
 
 in_hell = False
-image_id = 0
+image_src = 0
 scroll=None
 mode=1
 player = None
@@ -50,12 +50,14 @@ def is_colliding(x,y,k=0, w=8,h=8):
                 return True
     return False
 def go_to_hell():
-    global image_id 
+    global image_src 
     global in_hell
     global enemies
-    image_id = 1
+    global mode
+    image_src = 1
     in_hell = True
     enemies =  []
+    mode = -1
     for ke in killed_enemies:
           enemies.append(ke)
           ke.is_alive = True
@@ -145,7 +147,15 @@ def colision_area_tiles(r):
         for j in range(ymin, ymax): 
             arr.append([i,j])
     return arr
-
+def btn_up():
+    if in_hell:
+        if pyxel.btnp(pyxel.KEY_DOWN):
+            return True
+    else:
+        if pyxel.btnp(pyxel.KEY_UP):
+            return True
+    if pyxel.btnv(pyxel.GAMEPAD1_AXIS_LEFTY)*mode<=-20000:
+        return True
 class Player:
     def __init__(self, x, y):
         self.x = x
@@ -170,7 +180,7 @@ class Player:
             self.dx = -PLAYER_SPEED
             self.direction = -1
         self.dy = min(self.dy + 1, 3)
-        if (pyxel.btnp(pyxel.KEY_UP) or pyxel.btnv(pyxel.GAMEPAD1_AXIS_LEFTY)*mode<=-20000) and is_on_floor(self.x,self.y) :
+        if btn_up() and is_on_floor(self.x,self.y) :
             self.dy = -PLAYER_JUMP_SPEED
         self.x, self.y = push_back(self.x, self.y, self.dx, self.dy)
         if self.y < 0:
@@ -194,7 +204,7 @@ class Player:
             u = 0
         w = TILE_SIZE if self.direction > 0 else -TILE_SIZE 
 
-        pyxel.blt(self.x, self.y, image_id, u, 48, w, TILE_SIZE, transparent_color)
+        pyxel.blt(self.x, self.y, image_src, u, 48, w, TILE_SIZE, transparent_color)
         if DEBUG:
             r =  player.get_colision_area()
  
@@ -229,6 +239,7 @@ class Enemy1:
         
         if is_on_display(self.x):
             pyxel.blt(self.x, self.y, image_id, u, 40, w, TILE_SIZE, transparent_color)
+
 
 class Enemy2:
     def __init__(self, x, y):
@@ -267,7 +278,6 @@ class PlayerBullet:
         self.dx = dx
         self.dy = dy
         self.is_alive = True
-        self.start_boom=0
 
     def update(self):
         if self.is_alive and not is_colliding(self.x,self.y):
@@ -325,7 +335,7 @@ class App:
             
             for bullet in bullets:
                 if abs(bullet.x - enemies[enemy].x) < 6 and abs(bullet.y - enemies[enemy].y) < 6:
-                    bullet.destroy()
+                    bullets.remove(bullet)
                     del_list.append(enemies[enemy])
         
         for e in del_list:
@@ -345,17 +355,16 @@ class App:
         global scroll
         global transparent_color
         pyxel.cls(0)
-        layer=0 if mode==1 else 1
-        pyxel.blt(scroll, 64, 0, image_id, TILE_SIZE, TILE_SIZE, TILE_SIZE, transparent_color)
+        
+        pyxel.blt(scroll, 64, 0, image_src, TILE_SIZE, TILE_SIZE, TILE_SIZE, transparent_color)
         # Draw level
         if player!=None:
             scroll=max(min(player.x-pyxel.width//2, TILEMAP_WIDTH*TILE_SIZE-pyxel.width),0)
         else:
             scroll=pyxel.width//2
         pyxel.camera()
-        pyxel.tilemaps[0].imgsrc=layer
         pyxel.bltm(0,0,2,0,0,pyxel.width,pyxel.height)
-        pyxel.bltm(0, 0, 0, scroll, image_id, pyxel.width, pyxel.height, transparent_color)
+        pyxel.bltm(0, 0,image_src, scroll, 0, pyxel.width, pyxel.height, transparent_color)
         if DEBUG:
             for i in range(0,32):
                 for j in range(0,32):
@@ -370,16 +379,18 @@ class App:
             enemy.draw()
         for bullet in bullets:
             bullet.draw()
-
-
+        if pyxel.btn(pyxel.KEY_L) and not in_hell:
+            go_to_hell()
 def game_over():
-    global scroll, enemies
+    global scroll, enemies, in_hell, image_src 
     scroll = pyxel.width//2
     player.x = 0
     player.y = 0
     player.dx = 0
     player.dy = 0
     enemies = []
+    in_hell = False
+    image_src = 0 
     spawn_enemies()
     # pyxel.play(3, 9)
 
