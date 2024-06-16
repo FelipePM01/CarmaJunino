@@ -373,6 +373,15 @@ class App:
         if mode==1:
             pyxel.bltm(0,0,2,0,0,pyxel.width,pyxel.height)
         pyxel.bltm(0, 0,image_src, scroll, 0, pyxel.width, pyxel.height, transparent_color)
+        for i in range(0,32):
+            for j in range(0,32):
+                tile = get_tile(scroll//8+i, j)
+                if 0  == tile[0] and 2 == tile[1] or 0  == tile[0] and 9 == tile[1]:
+                    print(2*((pyxel.frame_count//8) %4))
+                    pyxel.rect(i*TILE_SIZE-scroll%8, j*TILE_SIZE, 2*TILE_SIZE, 2*TILE_SIZE, 1)
+                    pyxel.blt( i*TILE_SIZE-scroll%8, j*TILE_SIZE, image_src, (tile[0]+2*((pyxel.frame_count//8) %4))*TILE_SIZE, tile[1]*TILE_SIZE, 2* TILE_SIZE, 2*TILE_SIZE, transparent_color)
+                    pass
+
         if DEBUG:
             for i in range(0,32):
                 for j in range(0,32):
@@ -387,7 +396,10 @@ class App:
             enemy.draw()
         for bullet in bullets:
             bullet.draw()
-        if pyxel.btn(pyxel.KEY_L) and not in_hell:
+        tile1 = get_tile(player.x//TILE_SIZE, player.y//TILE_SIZE)
+        tile2 = get_tile((player.x+TILE_SIZE-1)//TILE_SIZE, (player.y + TILE_SIZE - 1)//TILE_SIZE)
+        #print(tile1, tile2)
+        if not in_hell and 0 <= tile1[0] < 2 and 9 <= tile1[1] < 11:
             go_to_hell()
 def game_over():
     global scroll, enemies, in_hell, image_src ,mode
