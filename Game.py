@@ -14,12 +14,14 @@ FPS=25
 SHOT_FRAME_INTERVAL=25
 BULLET_SPEED=4
 DEBUG  = False
-image_id = 0
 
+in_hell = False
+image_id = 0
 scroll=None
 mode=1
 player = None
 enemies = []
+killed_enemies = []
 bullets=[]
 
 class rect:
@@ -47,7 +49,16 @@ def is_colliding(x,y,k=0, w=8,h=8):
             if get_tile(i, j)[0] >= COLLIDING_TILE_X:
                 return True
     return False
-
+def go_to_hell():
+    global image_id 
+    global in_hell
+    global enemies
+    image_id = 1
+    in_hell = True
+    enemies =  []
+    for ke in killed_enemies:
+          enemies.append(ke)
+          ke.is_alive = True
 def push_back(x, y, dx, dy):
     abs_dx = abs(dx)
     abs_dy = abs(dy)
@@ -106,7 +117,7 @@ def spawn_enemies():
 def cleanup_entities(entities):
     for i in range(len(entities) - 1, -1, -1):
         if not entities[i].is_alive:
-            del entities[i]
+            entities.remove(entities[i])
 def btn_left():
     if pyxel.btnv(pyxel.GAMEPAD1_AXIS_LEFTX)*mode<=-20000:
         return True
@@ -317,8 +328,9 @@ class App:
                     bullet.destroy()
                     del_list.append(enemies[enemy])
         
-        for i in del_list:
-            enemies.remove(i)
+        for e in del_list:
+            enemies.remove(e)
+            killed_enemies.append(e)
             
         for enemy in enemies:
             enemy.update()
